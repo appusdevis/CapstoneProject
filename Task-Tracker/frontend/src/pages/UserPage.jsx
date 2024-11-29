@@ -4,11 +4,11 @@ import axios from 'axios';
 const UserPage = () => {
     const [users, setUsers] = useState([]);
     const userId=JSON.parse(localStorage.getItem("user-details")).googleId;
-    const admin=(userId==="107192922926771105227");
+    const admin=(localStorage.getItem("is-admin")=="true");
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const response = await axios.get('http://localhost:8000/user');
+                const response = await axios.get(`http://localhost:8000/user/${userId}`);
                 setUsers(response.data);
             } catch (err) {
                 console.error('Failed to fetch users', err);

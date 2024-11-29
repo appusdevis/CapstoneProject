@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-URL_DATABASE = 'mysql+pymysql://root:Elshaddai5#@localhost:3306/capstone'
+URL_DATABASE = 'mysql+pymysql://root:Teddy%402001@localhost:3306/capstone'
 engine = create_engine(URL_DATABASE)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

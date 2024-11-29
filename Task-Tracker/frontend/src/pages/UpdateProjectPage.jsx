@@ -14,7 +14,7 @@ const UpdateProjectPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const userId=JSON.parse(localStorage.getItem("user-details")).googleId;
-  const admin=(userId==="107192922926771105227");
+  const admin=(localStorage.getItem("is-admin")=="true");
 
   const handleUpdate = async (e) => {
 
@@ -22,7 +22,7 @@ const UpdateProjectPage = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.put(`http://localhost:8000/update-project/${projectId}`, {
+      await axios.put(`http://localhost:8000/update-project/${projectId}/${userId}`, {
         project_name: projectName,
         project_description: projectDescription,
         start_date: startDate,

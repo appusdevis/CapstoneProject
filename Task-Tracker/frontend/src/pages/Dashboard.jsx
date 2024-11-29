@@ -3,8 +3,8 @@ import Logout from "../components/Logout";
 
 export default function Dashboard(){
     const userId=JSON.parse(localStorage.getItem("user-details")).googleId;
-    const admin=(userId==="107192922926771105227");
-
+    const admin=(localStorage.getItem("is-admin")=="true");
+    console.log("admin value",admin);
     return (
       <div>
         <Logout/>

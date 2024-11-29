@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI,  HTTPException,  Depends,  status
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 import models
@@ -19,11 +19,11 @@ models.Base.metadata.create_all(bind=engine)
 
 
 class ProjectBase(BaseModel):
-    project_name: str
+    project_name:  str
     project_description: str
     start_date: date
     end_date: date
-    project_owner_id: str
+    project_owner_id:  str
 
 
 class UpdateProjectBase(BaseModel):
@@ -59,14 +59,14 @@ class EmployeeBase(BaseModel):
 
 
 class RoleBase(BaseModel):
-    role_id: int
-    role_name: str
+    role_id:  int
+    role_name:  str
 
 
 class UserRoleBase(BaseModel):
-    role_id: int
-    project_id: str
-    employee_id: str
+    role_id:  int
+    project_id:  str
+    employee_id:  str
 
 
 class UpdateUserRoleBase(BaseModel):
@@ -76,7 +76,7 @@ class UpdateUserRoleBase(BaseModel):
 
 
 class AdminBase(BaseModel):
-    employee_id: str
+    employee_id:  str
 
 
 class AdminBase(BaseModel):
@@ -147,7 +147,7 @@ async def create_task(project_id: str, user_id: str, task: TaskBase, db: db_depe
 async def get_user(user_id: str, db: db_dependency):
     users = db.query(models.Employee).all()
     if users is None:
-        raise HTTPException(status_code=404, detail="No projects")
+        raise HTTPException(status_code=404,  detail="No projects")
     return users
 
 
@@ -182,7 +182,7 @@ async def read_user_role(user_id: str, db: db_dependency):
     projects = db.query(models.UserRole).filter(
         models.UserRole.employee_id == user_id).all()
     if projects is None:
-        raise HTTPException(status_code=404, detail='Projects not found')
+        raise HTTPException(status_code=404,  detail='Projects not found')
     return projects
 
 
@@ -190,7 +190,7 @@ async def read_user_role(user_id: str, db: db_dependency):
 async def read_task(task_id: str, db: db_dependency):
     task = db.query(models.Task).filter(models.Task.task_id == task_id).first()
     if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise HTTPException(status_code=404,  detail="Task not found")
     return task
 
 
@@ -255,7 +255,7 @@ async def get_projects(user_id: str, db: db_dependency):
             projects.append(db.query(models.Project).filter(
                 models.Project.project_id == i).first())
     if projects is None:
-        raise HTTPException(status_code=404, detail="No projects")
+        raise HTTPException(status_code=404,  detail="No projects")
     return projects
 
 
@@ -263,7 +263,7 @@ async def get_projects(user_id: str, db: db_dependency):
 async def get_tasks(project_id: str, db: db_dependency):
     tasks = db.query(models.Task).all()
     if tasks is None:
-        raise HTTPException(status_code=404, detail="No projects")
+        raise HTTPException(status_code=404,  detail="No projects")
     return tasks
 
 
@@ -353,16 +353,20 @@ async def get_assigned_user(role_id: int, user_id: str, project_id: str, db: db_
         users = db.query(models.UserRole).filter(
             models.UserRole.project_id == project_id).all()
         if users is None:
-            raise HTTPException(status_code=404, detail="No projects")
+            return None
         Required_users = []
         if role_id == 2:
             for user in users:
                 if user.role_id == 2:
-                    Required_users.append(user)
+                    Task_creator = db.query(models.Employee).filter(
+                        models.Employee.employee_id == user.employee_id).first()
+                    Required_users.append(Task_creator)
         else:
             for user in users:
                 if user.role_id == 3:
-                    Required_users.append(user)
+                    Read_only_user = db.query(models.Employee).filter(
+                        models.Employee.employee_id == user.employee_id).first()
+                    Required_users.append(Read_only_user)
         return Required_users
     else:
         raise HTTPException(403, detail="Access Denied")

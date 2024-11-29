@@ -28,7 +28,7 @@ const ProjectPage = () => {
   const [showAddReadOnlyUserForm,setShowAddReadOnlyUserForm]=useState(false);
   const [showSuccessMessage,setShowSuccessMessage]=useState(false)
   const userId=JSON.parse(localStorage.getItem("user-details")).googleId;
-  const admin=(userId==="107192922926771105227");
+  const admin=(localStorage.getItem("is-admin")=="true");
   const [isTaskCreator,setIsTaskCreator]=useState(false);
 
   const openUpdateForm = (task) => {
@@ -53,7 +53,7 @@ const ProjectPage = () => {
         due_date: dueDate,
     };
     try {
-        await axios.put(`http://localhost:8000/update-task/${currentTask.task_id}`, updatedTask);
+        await axios.put(`http://localhost:8000/update-task/${currentTask.task_id}/${userId}/${projectId}`, updatedTask);
         setTasks(tasks.map(task => (task.task_id === currentTask.task_id ? updatedTask : task)));
         setShowUpdateForm(false);
         setCurrentTask(null);
@@ -64,9 +64,9 @@ const ProjectPage = () => {
   useEffect(() => {
     const getProjectData = async () => {
       try {
-        const projectResponse = await axios.get(`http://localhost:8000/projects/${projectId}`);
-        const tasksResponse = await axios.get('http://localhost:8000/tasks');
-        const employeeResponse = await axios.get('http://localhost:8000/user')
+        const projectResponse = await axios.get(`http://localhost:8000/projects/${projectId}/${userId}`);
+        const tasksResponse = await axios.get(`http://localhost:8000/${projectId}/tasks`);
+        const employeeResponse = await axios.get(`http://localhost:8000/user/${userId}`)
         const roleResponse=await axios.get(`http://localhost:8000/user-role/${userId}/${projectId}`)
         if(roleResponse.data==2){
           setIsTaskCreator(true)
@@ -78,10 +78,8 @@ const ProjectPage = () => {
           value: employee.employee_id,
           label: `${employee.employee_name} (${employee.employee_email})`,
       }));
-        // console.log(tasksResponse)
-        const projectTasks = tasksResponse.data.filter(task => task.project_id === projectId);
         setProject(projectResponse.data);
-        setTasks(projectTasks);
+        setTasks(tasksResponse.data);
         setEmployees(employeeOptions);
         console.log(employees);
       } catch (err) {
@@ -94,16 +92,15 @@ const ProjectPage = () => {
     getProjectData();
   }, [projectId,refresh]);
 
-  const handleDelete = async () => {
+  const handleDeleteProject = async () => {
     try {
-      const tasksResponse = await axios.get('http://localhost:8000/tasks/');
-      const projectTasks = tasksResponse.data.filter(task => task.project_id === projectId);
+      const tasksResponse = await axios.get(`http://localhost:8000/${projectId}/tasks/`);
+      const projectTasks = tasksResponse.data;
 
       for (const task of projectTasks) {
-        await axios.delete(`http://localhost:8000/tasks/${task.task_id}`);
+        await axios.delete(`http://localhost:8000/tasks/${task.task_id}/${userId}/${projectId}`);
       }
-
-      await axios.delete(`http://localhost:8000/projects/${projectId}`);
+      await axios.delete(`http://localhost:8000/delete-project/${projectId}/${userId}`);
       navigate('/projects');
     } catch (err) {
       console.error('Failed to delete project and its tasks', err);
@@ -121,14 +118,14 @@ const ProjectPage = () => {
       task_name: taskName,
       task_description: taskDescription,
       task_status: taskStatus,
-      task_owner_id: taskOwnerId,
+      task_owner_id: userId,
       due_date: dueDate,
       project_id: projectId,
     };
     //console.log(projectId)
     
     try {
-      await axios.post('http://localhost:8000/create-task/', newTask);
+      await axios.post(`http://localhost:8000/create-task/${projectId}/${userId}`, newTask);
       setTasks([...tasks,newTask])
       setShowTaskForm(false);
       //setTaskId(response.data.task_id);
@@ -157,7 +154,7 @@ const ProjectPage = () => {
       project_id:projectId
     }
     try{
-      await axios.post('http://localhost:8000/create-user-role',newProjectRole);
+      await axios.post(`http://localhost:8000/create-user-role/${userId}`,newProjectRole);
       setShowSuccessMessage(true);
       setTimeout(() => {
         setShowSuccessMessage(false);
@@ -180,7 +177,7 @@ const ProjectPage = () => {
       project_id:projectId
     }
     try{
-      await axios.post('http://localhost:8000/create-user-role',newProjectRole);
+      await axios.post(`http://localhost:8000/create-user-role/${userId}`,newProjectRole);
       setShowSuccessMessage(true);
       setTimeout(() => {
         setShowSuccessMessage(false);
@@ -196,15 +193,15 @@ const ProjectPage = () => {
 
   return (
     <div className="min-h-screen p-4 bg-gradient-to-b from-orange-500 to-gray-100 ">
-      <h1 className="text-3xl font-bold mb-4">{project.project_name}</h1>
       <Logout/>
+      <h1 className="text-5xl font-bold mb-4">{project.project_name}</h1>
       <p className="text-gray-700 mb-4">{project.project_description}</p>
       <p className="text-gray-700"><strong>Start Date:</strong> {new Date(project.start_date).toLocaleDateString()}</p>
       <p className="text-gray-700"><strong>End Date:</strong> {project.end_date ? new Date(project.end_date).toLocaleDateString() : 'N/A'}</p>
       <div className="flex space-x-4 mb-6 my-4">
         {admin && <button onClick={()=>setShowAddTaskCreatorForm(true)} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">Add Task Creator</button>}
         {admin && <button onClick={()=>setShowAddReadOnlyUserForm(true)} className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">Add Read-only User</button>}
-        {admin && <button onClick={handleDelete} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700">Delete Project</button>}
+        {admin && <button onClick={handleDeleteProject} className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-700">Delete Project</button>}
         {admin && <button onClick={handleUpdate} className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-700">Update Project</button>}
         {(admin || isTaskCreator) && <button onClick={() => setShowTaskForm(true)} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-700">Add Task</button>}
       </div>
@@ -215,7 +212,7 @@ const ProjectPage = () => {
         tasks.map((task) => (
           <div key={task.task_id} className="task-item border p-4 mb-4 flex justify-between items-center rounded-lg bg-gradient-to-r from-gray-200 to-gray-300">
               <div>
-                  <h3 className="font-bold">{task.task_name}</h3>
+                  <h3 className="text-2xl font-bold">{task.task_name}</h3>
                   <p>{task.task_description}</p>
                   <label className="block mt-2">
                       Status:
@@ -224,7 +221,7 @@ const ProjectPage = () => {
                           onChange={async (e) => {
                               const newStatus = e.target.value;
                               try {
-                                  await axios.put(`http://localhost:8000/update-task/${task.task_id}`, { ...task, task_status: newStatus });
+                                  await axios.put(`http://localhost:8000/update-task/${task.task_id}/${userId}/${projectId}`, { ...task, task_status: newStatus });
                                   setTasks(tasks.map(t => (t.task_id === task.task_id ? { ...t, task_status: newStatus } : t)));
                               } catch (err) {
                                   console.error('Failed to update task status', err);
@@ -242,11 +239,11 @@ const ProjectPage = () => {
                   <p className="mt-2">Due Date: {new Date(task.due_date).toLocaleDateString()}</p>
               </div>
               <div className="flex space-x-2">
-                  {isTaskCreator && <button onClick={() => openUpdateForm(task)} className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-700">Update Task</button>}
-                  {isTaskCreator && <button onClick={async () => {
+                  {(admin||isTaskCreator) && <button onClick={() => openUpdateForm(task)} className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-700">Update Task</button>}
+                  {(admin||isTaskCreator) && <button onClick={async () => {
                       try {
                           console.log(`Deleting task with ID: ${task.task_id}`);
-                          await axios.delete(`http://localhost:8000/tasks/${task.task_id}`);
+                          await axios.delete(`http://localhost:8000/tasks/${task.task_id}/${userId}/${projectId}`);
                           setTasks(tasks.filter(t => t.task_id !== task.task_id));
                       } catch (err) {
                           console.error('Failed to delete task', err);
@@ -296,16 +293,6 @@ const ProjectPage = () => {
                   <option value="completed">Completed</option>
                   <option value="not started">Not Started</option>
                 </select>
-              </div>
-              <div className="mb-4">
-                <label className="block text-gray-700">Task Owner ID</label>
-                <input
-                  type="number"
-                  value={taskOwnerId}
-                  onChange={(e) => setTaskOwnerId(e.target.value)}
-                  className="w-full p-2 border rounded"
-                  required
-                />
               </div>
               <div className="mb-4">
                 <label className="block text-gray-700">Due Date</label>

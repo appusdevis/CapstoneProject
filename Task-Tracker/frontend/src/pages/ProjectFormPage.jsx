@@ -9,7 +9,7 @@ const ProjectFormPage = ({ onAddProject }) => {
   const [endDate, setEndDate] = useState('');
   const navigate = useNavigate();
   const userId=JSON.parse(localStorage.getItem("user-details")).googleId;
-  const admin=(userId==="107192922926771105227");
+  const admin=(localStorage.getItem("is-admin")=="true");
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newProject = {
@@ -22,10 +22,11 @@ const ProjectFormPage = ({ onAddProject }) => {
     };
 
     try {
-      await axios.post('http://localhost:8000/create-project/', newProject);
+      await axios.post(`http://localhost:8000/create-project/${userId}`, newProject);
       navigate('/projects');
     } catch (error) {
       console.error('Failed to create project', error);
+      navigate('/projects');
     }
   };
 
@@ -75,7 +76,7 @@ const ProjectFormPage = ({ onAddProject }) => {
         <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700">
           Add Project
         </button>
-        <Link to="http://localhost:5173/projects" className="bg-white text-blue-500 mx-5">
+        <Link to="/projects" className="bg-white text-blue-500 mx-5">
           Cancel
         </Link>        
       </form>:<h1>You are not an admin</h1>}

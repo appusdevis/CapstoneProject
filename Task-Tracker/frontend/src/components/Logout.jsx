@@ -9,7 +9,7 @@ export default function Logout(){
         navigate('/');
     }
 
-    return <div>
+    return <div className='flex justify-end'>
     <GoogleLogout
     clientId={clientId}
     buttonText='Logout'

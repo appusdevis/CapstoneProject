@@ -10,25 +10,21 @@ export default function Login() {
         console.log("SUCCESS:", res.profileObj);
         localStorage.setItem("user-details",JSON.stringify(res));
         try {
-            const response = await axios.get('http://localhost:8000/user');
-            const users = response.data;
-            const userExists = users.find(user => user.employee_id === res.profileObj.googleId);
+            const isAdmin=await axios.get(`http://localhost:8000/is_admin/${res.profileObj.googleId}`)
+            localStorage.setItem("is-admin",isAdmin.data)
     
-            if (userExists) {
-                console.log('User exists, logging in...');
-                navigate('/dashboard');
-            } else {
-                const newUser = {
-                    employee_id: res.profileObj.googleId,
-                    employee_name: res.profileObj.givenName,
-                    employee_email: res.profileObj.email,
-                };
+            
+            const newUser = {
+                employee_id: res.profileObj.googleId,
+                employee_name: res.profileObj.givenName,
+                employee_email: res.profileObj.email,
+            };    
     
-                await axios.post('http://localhost:8000/create-user/', newUser);
+                await axios.post(`http://localhost:8000/create-user/${res.profileObj.googleId}`, newUser);
                 console.log('New user added to the database');
                 navigate('/dashboard');
             }
-        } catch (err) {
+         catch (err) {
             console.error('Error during user authentication', err);
         }
     };
